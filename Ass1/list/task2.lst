@@ -1,0 +1,73 @@
+     1                                  ;prints helloWorld
+     2                                  section .data
+     3 00000000 78206F72206B2C206F-     msg: db "x or k, or both are off range",10,0 ;this is our message
+     4 00000009 7220626F7468206172-
+     5 00000012 65206F66662072616E-
+     6 0000001B 67650A00           
+     7 0000001F 25640A00                fmt: db "%d",10,0
+     8                                  
+     9                                  section .bss
+    10                                  
+    11 00000000 <res 00000002>          z: resw 1
+    12                                  
+    13                                  section .text
+    14                                  extern printf
+    15                                  extern check
+    16                                  
+    17                                  global calc_div
+    18                                  
+    19                                  calc_div:
+    20 00000000 55                      	push ebp
+    21 00000001 89E5                    	mov ebp, esp 
+    22                                  
+    23 00000003 60                      	pusha			; Save registers
+    24                                  
+    25 00000004 BE00000000              	mov esi,0		; Initialize registers with 0
+    26 00000009 BF00000000              	mov edi,0		; Later on: esi = x, edi = k
+    27 0000000E B801000000              	mov eax,1 		; eax = 1. Later will be used to multiply.
+    28 00000013 BB02000000              	mov ebx,2		; ebx = 2. Later will be used to be the multiplied.
+    29                                   
+    30 00000018 8B7508                  	mov esi, dword [ebp+8]	; Get first argument (pointer)
+    31 0000001B 8B7D0C                  	mov edi, dword [ebp+12]	; Get second argument (pointer)
+    32                                  
+    33 0000001E 57                      	push edi		; push the second int to the stack
+    34 0000001F 56                      	push esi      ; push the first int to the stack
+    35 00000020 E8(00000000)            	call check			; problem with activating check
+    36                                  	;needs to remember to: add esp,8 ;clean up the stack
+    37 00000025 83F800                  	cmp eax,0   ; the return value of check is at eax
+    38 00000028 7412                    	je error	; check return 0, go to error. else, go on.
+    39 0000002A B801000000              	mov eax,1
+    40 0000002F 83C408                  	add esp,8 ;clean up the stack
+    41                                  
+    42                                   
+    43                                  	myLoop:	;k>0. So first time - for sure. 
+    44 00000032 F7E3                    	mul ebx			;eax=eax*ebx --> eax=1*2=2 [first iteration].
+    45 00000034 4F                      	dec edi			;edi=edi-1 -> k=k-1. 
+    46                                  
+    47 00000035 83FF00                  	cmp edi,0		;if edi=k=0 go to makeDiv.
+    48 00000038 7411                    	je makeDiv 		;else, Loop.
+    49 0000003A EBF6                    	jmp myLoop 
+    50                                  
+    51                                  	error:
+    52 0000003C 83C408                  	add esp,8 ;clean up the stack
+    53 0000003F 68[00000000]            	push msg ;pushes the msg address into the stack. Like push 2042492
+    54 00000044 E8(00000000)            	call printf
+    55 00000049 EB10                    	jmp finish
+    56                                  
+    57                                  	makeDiv: ;now eax: 2^k, esi:x, I want the opposite.
+    58 0000004B 96                      	xchg eax,esi
+    59 0000004C F7F6                     	div esi ; eax = eax / esi => eax = x/2^k - the result! 
+    60                                  
+    61 0000004E 50                        	push eax
+    62 0000004F 68[1F000000]             	push DWORD fmt
+    63 00000054 E8(00000000)            	call printf  ;call the printf to print it
+    64 00000059 EB00                    	jmp finish
+    65                                  
+    66                                  	finish:
+    67 0000005B 83C408                  	add esp,8 ;clean up the stack from push eax
+    68                                  
+    69 0000005E 61                      	popa			; Restore registers
+    70 0000005F 89EC                    	mov esp, ebp
+    71 00000061 5D                      	pop ebp
+    72 00000062 C3                      	ret
+    73                                  

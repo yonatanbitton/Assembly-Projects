@@ -1,0 +1,33 @@
+0x080485c3 in calc_div ()
+(gdb) x/5i $eip
+=> 0x80485c3 <calc_div+35>:	push   %ecx
+   0x80485c4 <calc_div+36>:	push   %edi
+   0x80485c5 <calc_div+37>:	call   0x80484bb <check>
+   0x80485ca <calc_div+42>:	je     0x80485d9 <error>
+   0x80485cc <calc_div+44>:	add    $0x8,%esp
+(gdb) print $esp
+$5 = (void *) 0xffffccd8
+(gdb) ni
+0x080485c4 in calc_div ()
+(gdb) print $esp
+$6 = (void *) 0xffffccd4
+(gdb) ni
+0x080485c5 in calc_div ()
+(gdb) print $esp
+$7 = (void *) 0xffffccd0
+(gdb) ni
+0x080485ca in calc_div ()
+(gdb) ni
+0x080485cc in calc_div ()
+(gdb) x/5i $eip ...
+(gdb) ni
+0x080485cf in myLoop ()
+(gdb) print $esp
+$8 = (void *) 0xffffccd8
+
+לפני ההכנסה הesp בd8. 
+אחרי הכנסה אחת, esp בd4.
+אחרת הנכסה שניה, esp בd8.
+אחרי הקריאה לפונקציה, לא זז. צריך להחזיר אותו => add 8,
+החזרנו אותו לd8.
+כלומר צריך שישאר שם. אחרי הכנסה הבאה, הוא צריך להיות בd4.

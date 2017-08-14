@@ -1,0 +1,2 @@
+line for activation:
+./ass3 input1 30 15 30 10

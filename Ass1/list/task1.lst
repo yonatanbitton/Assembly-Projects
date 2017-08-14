@@ -1,0 +1,114 @@
+     1                                  section	.rodata
+     2                                  LC0:
+     3 00000000 25730A00                	DB	"%s", 10, 0	; Format string
+     4                                  
+     5                                  section .bss
+     6                                  LC1:
+     7 00000000 <res 00000100>          	RESB	256
+     8                                  
+     9                                  section .text
+    10                                  	align 16
+    11                                  	global my_func
+    12                                  	extern printf
+    13                                  
+    14                                  my_func:
+    15 00000000 55                      	push	ebp
+    16 00000001 89E5                    	mov	ebp, esp	; Entry code - set up ebp and esp
+    17 00000003 60                      	pusha			; Save registers
+    18                                  
+    19 00000004 8B4D08                  	mov ecx, dword [ebp+8]	; Get argument (pointer to string)
+    20                                  
+    21 00000007 BE[00000000]             	mov esi,LC1  	;target buf
+    22 0000000C B800000000              	mov eax,0  		;initialize eax as 0
+    23 00000011 BB00000000              	mov ebx,0
+    24 00000016 BA01000000              	mov edx,1 		;initialize boolean - finishedLoop = false. (Will be updated after the numbers are converted)
+    25 0000001B BF00000000              	mov edi,0 		;initialize data holder - edi.
+    26                                  
+    27                                  
+    28                                  my_loop: ;code 
+    29 00000020 8A01                    	mov al,[ecx]	;put first char (33h) at eax's al (OR second char at second iteration)
+    30 00000022 41                      	inc ecx			;increase the source buffer
+    31                                  
+    32                                  compare:
+    33 00000023 3C0A                    	cmp al,10
+    34 00000025 7456                    	je print
+    35                                  
+    36 00000027 3C30                    	cmp al,'0'               ;now al has VALUE, not address, so no need to compare with [al].
+    37 00000029 7D02                    	jge greater_then_0
+    38 0000002B EB0A                    	jmp big_letters
+    39                                  
+    40                                  	greater_then_0:
+    41 0000002D 3C39                    	cmp al,'9'
+    42 0000002F 7E02                    	jle greater_then_0_and_smaller_then_9
+    43 00000031 EB04                    	jmp big_letters
+    44                                  
+    45                                  	greater_then_0_and_smaller_then_9:
+    46 00000033 2C30                    	sub al,48d
+    47 00000035 EB20                    	jmp check_loop_and_convert
+    48                                  
+    49                                  	big_letters:
+    50 00000037 3C41                    	cmp al,'A'
+    51 00000039 7D02                    	jge greater_then_A
+    52 0000003B EB0A                    	jmp small_letters
+    53                                  
+    54                                  	greater_then_A:
+    55 0000003D 3C5A                    	cmp al,'Z'
+    56 0000003F 7E02                    	jle greater_then_A_and_smaller_then_Z
+    57 00000041 EB04                    	jmp small_letters
+    58                                  
+    59                                  	greater_then_A_and_smaller_then_Z:
+    60 00000043 2C37                    	sub al,55d
+    61 00000045 EB10                    	jmp check_loop_and_convert
+    62                                  
+    63                                  	small_letters:
+    64 00000047 3C61                    	cmp al,'a'
+    65 00000049 7D02                    	jge greater_then_a
+    66 0000004B EB0A                    	jmp check_loop_and_convert
+    67                                  
+    68                                  	greater_then_a:
+    69 0000004D 3C7A                    	cmp al,'z'
+    70 0000004F 7E02                    	jle greater_then_a_and_smaller_then_z
+    71 00000051 EB04                    	jmp check_loop_and_convert
+    72                                  
+    73                                  	greater_then_a_and_smaller_then_z:
+    74 00000053 2C57                    	sub al,87d
+    75 00000055 EB00                    	jmp check_loop_and_convert
+    76                                  
+    77                                  	check_loop_and_convert:	
+    78 00000057 4A                      	dec edx      ;decrease edx. from edx:1 to edx:0 (at the start)
+    79 00000058 83FA00                  	cmp edx,0 
+    80 0000005B 740B                    	je another_loop ;if [edx]=0, first time, go to another_loop
+    81                                  	;else: second time here.
+    82 0000005D 89C3                    	mov ebx, eax ;ebx = eax (the latest "work" register)
+    83 0000005F 89F8                    	mov eax, edi ;eax = edi (the first "work" that was done)
+    84 00000061 BA01000000              	mov edx,1    ;edx=1 again, for next iteration
+    85 00000066 EB0B                    	jmp sum_results
+    86                                  	
+    87                                  	another_loop:
+    88 00000068 BF10000000              	mov edi,16
+    89 0000006D F7E7                    	mul edi      ;eax = eax * edi.  eax <- 3*16 
+    90 0000006F 89C7                    	mov edi, eax ;edi = eax - save that data for later!
+    91 00000071 EBAD                    	jmp my_loop
+    92                                  
+    93                                  	sum_results:
+    94 00000073 01D8                    	add eax, ebx ;eax = eax + ebx	eax <- 3*16+4 = 48+4 = 52 = Decimal representaion of the number 4.
+    95 00000075 8906                    	mov [esi],eax ;push the result into the target buffer
+    96                                  
+    97                                  	end:
+    98 00000077 46                          inc esi      	    ; increment target buffer pointer
+    99 00000078 80390A                  	cmp byte [ecx], 10   ; check if byte pointed to is zero [input ends with \n]
+   100 0000007B 75A3                    	jne my_loop      ; keep looping until it is null terminated
+   101                                  
+   102                                  	print:
+   103 0000007D C60600                  	mov byte [esi],0 	 ; mark the end of the target buffer
+   104                                  
+   105 00000080 68[00000000]            	push	LC1		; Call printf with 2 arguments: pointer to str
+   106 00000085 68[00000000]            	push	LC0		; and pointer to format string.
+   107 0000008A E8(00000000)            	call	printf
+   108 0000008F 83C408                  	add 	esp, 8		; Clean up stack after call
+   109                                  
+   110 00000092 61                      	popa			; Restore registers
+   111 00000093 89EC                    	mov	esp, ebp	; Function exit code
+   112 00000095 5D                      	pop	ebp
+   113 00000096 C3                      	ret
+   114                                  
